@@ -5,14 +5,80 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitBtn = document.getElementById('sync-btn');
   const btnText = submitBtn.querySelector('.btn-text');
   const spinner = submitBtn.querySelector('.spinner');
-  
+
   const statusContainer = document.getElementById('status-container');
   const statusMessage = document.getElementById('status-message');
+  const langToggle = document.getElementById('lang-toggle');
+
+  // Translations dictionary
+  const i18n = {
+    'en': {
+      title: 'Backup-teams Sync.',
+      subtitle: 'Securely connect your Teams session.',
+      emailLabel: 'Student Email',
+      emailPlaceholder: 'student@university.edu',
+      secretLabel: 'Sync Secret',
+      secretPlaceholder: 'Enter your super secret key',
+      syncBtn: 'Sync Tokens',
+      errTab: 'Cannot access the current tab.',
+      errOpenTeams: 'Please open teams.microsoft.com and log in first.',
+      errNoToken: 'No Graph token found. Click on a few files in Teams and try again.',
+      successSync: 'Token successfully synced with Backup Teams backend!',
+      errGeneric: 'An unexpected error occurred.',
+      errServer: 'Failed to sync with API backend.'
+    },
+    'pt-br': {
+      title: 'Backup-teams Sync.',
+      subtitle: 'Conecte sua sessão do Teams com segurança.',
+      emailLabel: 'E-mail do Aluno',
+      emailPlaceholder: 'aluno@universidade.edu',
+      secretLabel: 'Chave de Sincronização',
+      secretPlaceholder: 'Insira sua chave super secreta',
+      syncBtn: 'Sincronizar Tokens',
+      errTab: 'Não foi possível acessar a aba atual.',
+      errOpenTeams: 'Por favor, abra teams.microsoft.com e faça login primeiro.',
+      errNoToken: 'Nenhum token Graph encontrado. Clique em alguns arquivos no Teams e tente novamente.',
+      successSync: 'Token sincronizado com sucesso com o backend!',
+      errGeneric: 'Ocorreu um erro inesperado.',
+      errServer: 'Falha ao sincronizar com o backend da API.'
+    }
+  };
+
+  let currentLang = 'en';
+
+  // Apply translations to UI
+  const applyTranslations = (lang) => {
+    currentLang = lang;
+    const t = i18n[lang];
+
+    // Static elements
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (t[key]) el.textContent = t[key];
+    });
+
+    // Placeholders
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (t[key]) el.placeholder = t[key];
+    });
+  };
+
+  // Language toggle listener
+  langToggle.addEventListener('change', (e) => {
+    const lang = e.target.value;
+    applyTranslations(lang);
+    chrome.storage.local.set({ savedLang: lang });
+  });
 
   // Load saved data from Chrome sync storage
-  chrome.storage.local.get(['savedEmail', 'savedSecret'], (result) => {
+  chrome.storage.local.get(['savedEmail', 'savedSecret', 'savedLang'], (result) => {
     if (result.savedEmail) emailInput.value = result.savedEmail;
     if (result.savedSecret) secretInput.value = result.savedSecret;
+    if (result.savedLang) {
+      langToggle.value = result.savedLang;
+      applyTranslations(result.savedLang);
+    }
   });
 
   const showStatus = (message, type) => {
@@ -52,12 +118,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
       if (!tab) {
-         throw new Error("Cannot access the current tab.");
+        throw new Error(i18n[currentLang].errTab);
       }
 
       // 2. Validate we are on Microsoft Teams
       if (!tab.url || !tab.url.includes('teams.microsoft.com')) {
-        throw new Error("Please open teams.microsoft.com and log in first.");
+        throw new Error(i18n[currentLang].errOpenTeams);
       }
 
       // 3. Inject our payload extractor script
@@ -69,16 +135,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const bestToken = results[0]?.result;
 
       if (!bestToken) {
-        throw new Error("No Graph token found. Click on a few files in Teams and try again.");
+        throw new Error(i18n[currentLang].errNoToken);
       }
 
       // 4. Send token to our Backend
-      await syncWithBackend(email, bestToken, secret);
+      await syncWithBackend(email, bestToken, secret, currentLang);
 
-      showStatus("Token successfully synced with Backup Teams backend!", "success");
+      showStatus(i18n[currentLang].successSync, "success");
 
     } catch (err) {
-      showStatus(err.message || "An unexpected error occurred.", "error");
+      showStatus(err.message || i18n[currentLang].errGeneric, "error");
     } finally {
       setLoading(false);
     }
@@ -102,12 +168,12 @@ function extractMsalToken() {
     try {
       const raw = localStorage.getItem(key);
       if (!raw || raw.length < 100) continue;
-      
+
       const obj = JSON.parse(raw);
       if (!obj || typeof obj !== 'object') continue;
 
-      const secret  = obj.secret  || obj.access_token || obj.token;
-      const target  = obj.target  || obj.scope        || obj.scopes || '';
+      const secret = obj.secret || obj.access_token || obj.token;
+      const target = obj.target || obj.scope || obj.scopes || '';
       const expires = obj.expiresOn || obj.expires_on || obj.ext_expires_on || 0;
 
       if (!secret || typeof secret !== 'string' || !secret.startsWith('ey')) continue;
@@ -116,7 +182,7 @@ function extractMsalToken() {
       if (expires && (parseInt(expires, 10) < now)) continue;  // expired
 
       candidates.push({ token: secret, scope: target, expires: expires });
-    } catch(e) {
+    } catch (e) {
       // Silent catch: localStorage might contain malformed JSON from other apps.
     }
   }
@@ -131,7 +197,7 @@ function extractMsalToken() {
  * API LAYER (Executes in popup context)
  * -------------------------------------------------------------
  */
-async function syncWithBackend(email, accessToken, syncSecret) {
+async function syncWithBackend(email, accessToken, syncSecret, currentLang) {
   const response = await fetch('https://api.backup-teams.com/auth/sync-token', {
     method: 'POST',
     headers: {
@@ -146,11 +212,11 @@ async function syncWithBackend(email, accessToken, syncSecret) {
   });
 
   if (!response.ok) {
-    let errorMsg = 'Failed to sync with API backend.';
-    try { 
-      const data = await response.json(); 
+    let errorMsg = currentLang === 'pt-br' ? 'Falha ao sincronizar com o backend da API.' : 'Failed to sync with API backend.';
+    try {
+      const data = await response.json();
       if (data.detail) errorMsg = data.detail;
-    } catch (e) {}
+    } catch (e) { }
     throw new Error(`Server Error: ${errorMsg}`);
   }
 

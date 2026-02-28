@@ -1,10 +1,15 @@
 :root {
-  --bg-color: #0B1C14; /* Deep forest background */
-  --surface-color: #112A1F; /* Slightly lighter for cards */
-  --primary-color: #38A169; /* Bright dynamic green */
+  --bg-color: #0B1C14;
+  /* Deep forest background */
+  --surface-color: #112A1F;
+  /* Slightly lighter for cards */
+  --primary-color: #38A169;
+  /* Bright dynamic green */
   --primary-hover: #2F855A;
-  --text-main: #F0FDF4; /* Off-white text */
-  --text-muted: #A3DAC2; /* Muted greenish text */
+  --text-main: #F0FDF4;
+  /* Off-white text */
+  --text-muted: #A3DAC2;
+  /* Muted greenish text */
   --border-color: #1F4533;
   --error-bg: #4A1A1A;
   --error-text: #FEB2B2;
@@ -19,6 +24,7 @@ body {
   padding: 0;
   width: 340px;
   background-color: var(--bg-color);
+  /* Restored background color to fill the rectangular popup */
   color: var(--text-main);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -30,6 +36,7 @@ body {
   flex-direction: column;
   gap: 20px;
   background: radial-gradient(circle at top right, rgba(56, 161, 105, 0.1), transparent 50%), var(--bg-color);
+  /* Removed border-radius as the native OS popup window is rigidly rectangular */
 }
 
 .header {
@@ -40,14 +47,48 @@ body {
   gap: 8px;
 }
 
+.header-top {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.lang-toggle {
+  grid-column: 3;
+  /* Push toggle to the right column */
+  justify-self: end;
+  background: var(--surface-color);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.lang-toggle:hover,
+.lang-toggle:focus {
+  border-color: var(--primary-color);
+  color: var(--text-main);
+}
+
 .logo-wrapper {
+  grid-column: 2;
+  /* Force logo into the absolute center column */
   background: var(--surface-color);
   border: 1px solid var(--border-color);
   padding: 12px;
-  border-radius: 12px;
+  border-radius: 16px;
+  /* Rounder logo */
   color: var(--primary-color);
   box-shadow: var(--shadow-sm);
-  margin-bottom: 8px;
+  justify-self: center;
 }
 
 h1 {
@@ -87,8 +128,9 @@ input {
   background-color: rgba(17, 42, 31, 0.6);
   border: 1px solid var(--border-color);
   color: var(--text-main);
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  /* Rounder inputs */
   font-size: 14px;
   font-family: inherit;
   transition: all 0.2s ease;
@@ -110,8 +152,9 @@ input::placeholder {
   background-color: var(--primary-color);
   color: white;
   border: none;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  /* Rounder button */
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -134,8 +177,9 @@ input::placeholder {
 }
 
 .status-container {
-  padding: 12px;
-  border-radius: 8px;
+  padding: 14px;
+  border-radius: 12px;
+  /* Rounder status box */
   font-size: 13px;
   display: flex;
   align-items: flex-start;
@@ -175,10 +219,19 @@ input::placeholder {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
