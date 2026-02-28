@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="logo-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h1>Eco Planet Sync</h1>
+      <p class="subtitle">Securely connect your Teams session.</p>
+    </header>
+
+    <main>
+      <form id="sync-form">
+        <div class="input-group">
+          <label for="email">Student Email</label>
+          <input type="email" id="email" placeholder="student@university.edu" required autocomplete="email">
+        </div>
+
+        <div class="input-group">
+          <label for="secret">Sync Secret</label>
+          <input type="password" id="secret" placeholder="Enter your super secret key" required autocomplete="off">
+        </div>
+
+        <button type="submit" id="sync-btn" class="btn-primary">
+          <span class="btn-text">Sync Tokens</span>
+          <span class="spinner hidden"></span>
+        </button>
+      </form>
+    </main>
+
+    <div id="status-container" class="status-container hidden">
+      <div id="status-icon" class="status-icon"></div>
+      <p id="status-message" class="status-message"></p>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
